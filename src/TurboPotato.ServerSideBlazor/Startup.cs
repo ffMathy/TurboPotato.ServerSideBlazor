@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Jil;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -20,11 +22,18 @@ namespace TurboPotato.ServerSideBlazor
         {
             services.AddRazorPages();
             services.AddServerSideBlazor();
+
+            services.AddHttpClient();
+
             services.AddSingleton<WeatherForecastService>();
+            services.AddSingleton<InMemoryChatMessageRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(
+            IApplicationBuilder app,
+            IWebHostEnvironment env,
+            InMemoryChatMessageRepository chatMessageRepository)
         {
             if (env.IsDevelopment())
             {
@@ -39,6 +48,33 @@ namespace TurboPotato.ServerSideBlazor
             app.UseHttpsRedirection();
 
             app.UseStaticFiles();
+
+            app.Use(async (context, next) =>
+            {
+                if (context.Request.Path.StartsWithSegments("/api"))
+                {
+                    if (context.Request.Method == "PUT")
+                    {
+                        using (var body = context.Request.Body)
+                        using (var reader = new StreamReader(body))
+                        {
+                            chatMessageRepository.AddChatMessage(
+                                JSON.Deserialize<ChatMessage>(
+                                    await reader.ReadToEndAsync()));
+                        }
+                    } else
+                    {
+                        var json = JSON.Serialize(
+                            chatMessageRepository.GetChatMessages());
+
+                        await context.Response.WriteAsync(json);
+                    }
+                }
+                else
+                {
+                    await next();
+                }
+            });
 
             app.UseRouting();
 
