@@ -10,33 +10,25 @@
 <h1>Chat</h1>
 
 <h2>Username</h2>
-<input type="text" bind="@Username" />
+<input type="text" />
 
 <br />
 
 <h2>Chat activity</h2>
 <div>
-    @foreach (var message in ChatMessages)
-    {
-        <h3>@message.From</h3>
-        <i>@message.SentAtUtc</i>
-        <p>@message.Message</p>
-    }
+    <!-- TODO: show chat messages here -->
 </div>
 
 <br />
 
 <h2>Enter message</h2>
-<input type="text" bind="MessageToSend" />
-<button onclick="@SendMessageAsync">Send</button>
+<input type="text" />
+<button>Send</button>
 
 @functions {
     private HttpClient httpClient;
 
     private const string ApiEndpoint = "https://localhost:5001/api";
-
-    public string Username { get; set; }
-    public string MessageToSend { get; set; }
 
     public IReadOnlyList<ChatMessage> ChatMessages { get; set; }
 
@@ -55,23 +47,12 @@
         }
     }
 
-    private async Task SendMessageAsync()
-    {
-        var message = MessageToSend;
-        MessageToSend = null;
-
-        if (message != null)
-        {
-            await AddChatMessageAsync(message);
-        }
-    }
-
-    private async Task AddChatMessageAsync(string message)
+    private async Task AddChatMessageAsync(string username, string message)
     {
         var messageObject = new ChatMessage()
         {
             Message = message,
-            From = Username,
+            From = username,
             SentAtUtc = DateTime.UtcNow
         };
 
