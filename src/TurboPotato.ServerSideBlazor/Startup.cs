@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using TurboPotato.ServerSideBlazor.Data;
 
 namespace TurboPotato.ServerSideBlazor
@@ -33,7 +34,8 @@ namespace TurboPotato.ServerSideBlazor
         public void Configure(
             IApplicationBuilder app,
             IWebHostEnvironment env,
-            InMemoryChatMessageRepository chatMessageRepository)
+            InMemoryChatMessageRepository chatMessageRepository,
+            ILogger logger)
         {
             if (env.IsDevelopment())
             {
@@ -58,14 +60,16 @@ namespace TurboPotato.ServerSideBlazor
                         using (var body = context.Request.Body)
                         using (var reader = new StreamReader(body))
                         {
+                            var json = await reader.ReadToEndAsync();
+                            logger.LogInformation("PUT: " + json);
                             chatMessageRepository.AddChatMessage(
-                                JSON.Deserialize<ChatMessage>(
-                                    await reader.ReadToEndAsync()));
+                                JSON.Deserialize<ChatMessage>(json));
                         }
                     } else
                     {
                         var json = JSON.Serialize(
                             chatMessageRepository.GetChatMessages());
+                        logger.LogInformation("GET: " + json);
 
                         await context.Response.WriteAsync(json);
                     }
