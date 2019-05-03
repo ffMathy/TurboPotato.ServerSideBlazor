@@ -34,8 +34,7 @@ namespace TurboPotato.ServerSideBlazor
         public void Configure(
             IApplicationBuilder app,
             IWebHostEnvironment env,
-            InMemoryChatMessageRepository chatMessageRepository,
-            ILogger logger)
+            InMemoryChatMessageRepository chatMessageRepository)
         {
             if (env.IsDevelopment())
             {
@@ -61,7 +60,8 @@ namespace TurboPotato.ServerSideBlazor
                         using (var reader = new StreamReader(body))
                         {
                             var json = await reader.ReadToEndAsync();
-                            logger.LogInformation("PUT: " + json);
+                            Console.WriteLine("PUT: " + json);
+
                             chatMessageRepository.AddChatMessage(
                                 JSON.Deserialize<ChatMessage>(json));
                         }
@@ -69,7 +69,7 @@ namespace TurboPotato.ServerSideBlazor
                     {
                         var json = JSON.Serialize(
                             chatMessageRepository.GetChatMessages());
-                        logger.LogInformation("GET: " + json);
+                        Console.WriteLine("GET: " + json);
 
                         await context.Response.WriteAsync(json);
                     }
